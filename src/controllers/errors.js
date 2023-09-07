@@ -42,6 +42,8 @@ const handleURIErrors = function (err, req, res, next) {
                     });
                 }
                 else {
+                    // The next line calls a function in a module that has not been updated to TS yet
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
                     yield middleware_1.default.buildHeaderAsync(req, res);
                     res.status(400).render('400', { error: validator_1.default.escape(String(err.message)) });
                 }
@@ -62,6 +64,8 @@ function getErrorHandlers(cases) {
         }
         catch (err) {
             // Assume defaults
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             winston_1.default.warn(`[errors/handle] Unable to retrieve plugin handlers for errors: ${err.message}`);
             return { cases };
         }
@@ -69,42 +73,63 @@ function getErrorHandlers(cases) {
 }
 // this needs to have four arguments or express treats it as `(req, res, next)`
 // don't remove `next`!
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const handleErrors = function (err, req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const cases = {
             EBADCSRFTOKEN: function () {
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
                 winston_1.default.error(`${req.method} ${req.originalUrl}\n${err.message}`);
                 res.sendStatus(403);
             },
             'blacklisted-ip': function () {
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
                 res.status(403).type('text/plain').send(err.message);
             },
         };
-        const defaultHandler = function () {
+        const defaultHandler = function (err) {
             return __awaiter(this, void 0, void 0, function* () {
                 if (res.headersSent) {
                     return;
                 }
                 // Display NodeBB error page
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
                 const status = parseInt(err.status, 10);
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
                 if ((status === 302 || status === 308) && err.path) {
                     return res.locals.isAPI ?
-                        res.set('X-Redirect', err.path).status(200).json(err.path) :
+                        // The next line calls a function in a module that has not been updated to TS yet
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
+                        res.set('X-Redirect', String(err.path)).status(200).json(String(err.path)) :
+                        // The next line calls a function in a module that has not been updated to TS yet
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
                         res.redirect(String(nconf_1.default.get('relative_path')) + String(err.path));
                 }
                 const path = String(req.path || '');
                 if (path.startsWith(`${nconf_1.default.get('relative_path')}/api/v3`)) {
                     let status = 500;
+                    // The next line calls a function in a module that has not been updated to TS yet
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
                     if (err.message.startsWith('[[')) {
                         status = 400;
+                        // The next line calls a function in a module that has not been updated to TS yet
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
                         err.message = yield translator_1.default.translate(err.message);
                     }
                     return helpers_2.default.formatApiResponse(status, res, err);
                 }
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
                 winston_1.default.error(`${req.method} ${req.originalUrl}\n${err.stack}`);
                 res.status(status || 500);
                 const data = {
                     path: validator_1.default.escape(path),
+                    // The next line calls a function in a module that has not been updated to TS yet
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
                     error: validator_1.default.escape(String(err.message)),
                     bodyClass: helpers_1.default.buildBodyClass(req, res),
                 };
@@ -112,6 +137,8 @@ const handleErrors = function (err, req, res, next) {
                     res.json(data);
                 }
                 else {
+                    // The next line calls a function in a module that has not been updated to TS yet
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
                     yield middleware_1.default.buildHeaderAsync(req, res);
                     res.render('500', data);
                 }
@@ -119,16 +146,24 @@ const handleErrors = function (err, req, res, next) {
         };
         const data = yield getErrorHandlers(cases);
         try {
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             if (data.cases.hasOwnProperty(err.code)) {
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
                 data.cases[err.code](err, req, res, defaultHandler);
             }
             else {
-                yield defaultHandler();
+                yield defaultHandler(err);
             }
         }
         catch (_err) {
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             winston_1.default.error(`${req.method} ${req.originalUrl}\n${_err.stack}`);
             if (!res.headersSent) {
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
                 res.status(500).send(_err.message);
             }
         }

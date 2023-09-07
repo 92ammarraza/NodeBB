@@ -28,6 +28,8 @@ export const handleURIErrors = async function (err: Error, req: Request, res: Re
                     error: '[[global:400.title]]',
                 });
             } else {
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
                 await middleware.buildHeaderAsync(req, res);
                 res.status(400).render('400', { error: validator.escape(String(err.message)) });
             }
@@ -42,9 +44,11 @@ async function getErrorHandlers(cases: { [key: string]: () => void }) {
     try {
         return await plugins.hooks.fire('filter:error.handle', {
             cases: cases,
-        });
+        }) as { [key: string]: () => void };
     } catch (err) {
         // Assume defaults
+        // The next line calls a function in a module that has not been updated to TS yet
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
         winston.warn(`[errors/handle] Unable to retrieve plugin handlers for errors: ${err.message as string}`);
         return { cases };
     }
@@ -52,63 +56,96 @@ async function getErrorHandlers(cases: { [key: string]: () => void }) {
 
 // this needs to have four arguments or express treats it as `(req, res, next)`
 // don't remove `next`!
-export const handleErrors = async function (err: Error, req: Request, res: Response, next: NextFunction) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const handleErrors = async function (err, req: Request, res: Response, next: NextFunction) {
     const cases: { [key: string]: () => void } = {
         EBADCSRFTOKEN: function () {
-            winston.error(`${req.method} ${req.originalUrl}\n${err.message}`);
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            winston.error(`${req.method} ${req.originalUrl}\n${err.message as string}`);
             res.sendStatus(403);
         },
         'blacklisted-ip': function () {
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             res.status(403).type('text/plain').send(err.message);
         },
     };
-    const defaultHandler = async function () {
+    const defaultHandler = async function (err) {
         if (res.headersSent) {
             return;
         }
         // Display NodeBB error page
-        const status = parseInt((err as any).status as string, 10);
-        if ((status === 302 || status === 308) && (err as any).path) {
+        // The next line calls a function in a module that has not been updated to TS yet
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        const status = parseInt(err.status as string, 10);
+        // The next line calls a function in a module that has not been updated to TS yet
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        if ((status === 302 || status === 308) && err.path) {
             return res.locals.isAPI ?
-                res.set('X-Redirect', (err as any).path).status(200).json((err as any).path) :
-                res.redirect(String(nconf.get('relative_path')) + String((err as any).path));
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
+                res.set('X-Redirect', String(err.path)).status(200).json(String(err.path)) :
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
+                res.redirect(String(nconf.get('relative_path')) + String(err.path));
         }
 
         const path = String(req.path || '');
 
         if (path.startsWith(`${nconf.get('relative_path') as string}/api/v3`)) {
             let status = 500;
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
             if (err.message.startsWith('[[')) {
                 status = 400;
+                // The next line calls a function in a module that has not been updated to TS yet
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
                 err.message = await translator.translate(err.message);
             }
             return helpers.formatApiResponse(status, res, err);
         }
 
-        winston.error(`${req.method} ${req.originalUrl}\n${err.stack}`);
+        // The next line calls a function in a module that has not been updated to TS yet
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
+        winston.error(`${req.method} ${req.originalUrl}\n${err.stack as string}`);
         res.status(status || 500);
         const data = {
             path: validator.escape(path),
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
             error: validator.escape(String(err.message)),
-            bodyClass: middlewareHelpers.buildBodyClass(req, res),
+            bodyClass: middlewareHelpers.buildBodyClass(req, res) as string,
         };
         if (res.locals.isAPI) {
             res.json(data);
         } else {
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             await middleware.buildHeaderAsync(req, res);
             res.render('500', data);
         }
     };
-    const data = await getErrorHandlers(cases);
+
+    const data = await getErrorHandlers(cases) as { [key: string]: () => void };
+
     try {
-        if (data.cases.hasOwnProperty((err as any).code as string)) {
-            data.cases[(err as any).code as string](err, req, res, defaultHandler);
+        // The next line calls a function in a module that has not been updated to TS yet
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        if (data.cases.hasOwnProperty(err.code as string)) {
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            data.cases[err.code as string](err, req, res, defaultHandler);
         } else {
-            await defaultHandler();
+            await defaultHandler(err);
         }
     } catch (_err) {
+        // The next line calls a function in a module that has not been updated to TS yet
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
         winston.error(`${req.method} ${req.originalUrl}\n${_err.stack as string}`);
         if (!res.headersSent) {
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             res.status(500).send(_err.message);
         }
     }
